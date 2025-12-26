@@ -22,20 +22,25 @@ namespace RRTAlgorithms
             : base(start, goal, obstacles, bounds, stepSize, maxIter, randomSeed)
         {
             this.searchRadius = searchRadius;
+            
+            // 替换start和goal为NodeStar类型
+            this.start = new NodeStar(start.Item1, start.Item2);
+            this.goal = new NodeStar(goal.Item1, goal.Item2);
+            this.nodes = new List<Node> { this.start };
         }
 
         /// <summary>
         /// 查找新节点附近的所有节点
         /// </summary>
-        protected List<Node> FindNearNodes(Node newNode)
+        protected List<NodeStar> FindNearNodes(NodeStar newNode)
         {
-            return nodes.Where(node => Distance(node, newNode) <= searchRadius).ToList();
+            return nodes.Cast<NodeStar>().Where(node => Distance(node, newNode) <= searchRadius).ToList();
         }
 
         /// <summary>
         /// 为新节点选择最优父节点
         /// </summary>
-        protected Node ChooseParent(Node newNode, List<Node> nearNodes)
+        protected NodeStar ChooseParent(NodeStar newNode, List<NodeStar> nearNodes)
         {
             if (nearNodes.Count == 0)
             {
@@ -43,7 +48,7 @@ namespace RRTAlgorithms
             }
 
             double minCost = double.MaxValue;
-            Node bestParent = null;
+            NodeStar bestParent = null;
 
             foreach (var nearNode in nearNodes)
             {
@@ -67,7 +72,7 @@ namespace RRTAlgorithms
         /// <summary>
         /// 重连操作：检查是否可以通过新节点改善邻近节点的路径
         /// </summary>
-        protected void Rewire(Node newNode, List<Node> nearNodes)
+        protected void Rewire(NodeStar newNode, List<NodeStar> nearNodes)
         {
             foreach (var nearNode in nearNodes)
             {
@@ -84,9 +89,9 @@ namespace RRTAlgorithms
         /// <summary>
         /// 递归更新所有子节点的代价
         /// </summary>
-        protected void UpdateChildrenCost(Node parentNode)
+        protected void UpdateChildrenCost(NodeStar parentNode)
         {
-            foreach (var node in nodes)
+            foreach (var node in nodes.Cast<NodeStar>())
             {
                 if (node.Parent == parentNode)
                 {
@@ -114,15 +119,15 @@ namespace RRTAlgorithms
                     continue;
                 }
 
-                Node newNode = new Node(newX, newY);
-                List<Node> nearNodes = FindNearNodes(newNode);
+                NodeStar newNode = new NodeStar(newX, newY);
+                List<NodeStar> nearNodes = FindNearNodes(newNode);
 
                 // 选择最优父节点
-                Node bestParent = ChooseParent(newNode, nearNodes);
+                NodeStar bestParent = ChooseParent(newNode, nearNodes);
                 if (bestParent == null)
                 {
                     newNode.Parent = nearest;
-                    newNode.Cost = nearest.Cost + Distance(nearest, newNode);
+                    newNode.Cost = ((NodeStar)nearest).Cost + Distance(nearest, newNode);
                 }
 
                 nodes.Add(newNode);
@@ -134,7 +139,7 @@ namespace RRTAlgorithms
                 {
                     Console.WriteLine($"找到路径！迭代次数: {i + 1}");
                     goal.Parent = newNode;
-                    goal.Cost = newNode.Cost + Distance(newNode, goal);
+                    ((NodeStar)goal).Cost = newNode.Cost + Distance(newNode, goal);
                     return ExtractPath();
                 }
 

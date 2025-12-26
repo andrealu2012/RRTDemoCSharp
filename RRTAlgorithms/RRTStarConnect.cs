@@ -20,20 +20,28 @@ namespace RRTAlgorithms
             : base(start, goal, obstacles, bounds, stepSize, maxIter, randomSeed)
         {
             this.searchRadius = searchRadius;
+            
+            // 替换start和goal为NodeStar类型
+            this.start = new NodeStar(start.Item1, start.Item2);
+            this.goal = new NodeStar(goal.Item1, goal.Item2);
+            
+            // 重新初始化两棵树
+            this.startTree = new List<Node> { this.start };
+            this.goalTree = new List<Node> { this.goal };
         }
 
         /// <summary>
         /// 在指定树中查找新节点附近的所有节点
         /// </summary>
-        protected List<Node> FindNearNodesInTree(List<Node> tree, Node newNode)
+        protected List<NodeStar> FindNearNodesInTree(List<Node> tree, NodeStar newNode)
         {
-            return tree.Where(node => Distance(node, newNode) <= searchRadius).ToList();
+            return tree.Cast<NodeStar>().Where(node => Distance(node, newNode) <= searchRadius).ToList();
         }
 
         /// <summary>
         /// 在指定树中为新节点选择最优父节点
         /// </summary>
-        protected Node ChooseParentInTree(List<Node> tree, Node newNode, List<Node> nearNodes)
+        protected NodeStar ChooseParentInTree(List<Node> tree, NodeStar newNode, List<NodeStar> nearNodes)
         {
             if (nearNodes.Count == 0)
             {
@@ -41,7 +49,7 @@ namespace RRTAlgorithms
             }
 
             double minCost = double.MaxValue;
-            Node bestParent = null;
+            NodeStar bestParent = null;
 
             foreach (var nearNode in nearNodes)
             {
@@ -65,7 +73,7 @@ namespace RRTAlgorithms
         /// <summary>
         /// 在指定树中进行rewire操作
         /// </summary>
-        protected void RewireTree(List<Node> tree, Node newNode, List<Node> nearNodes)
+        protected void RewireTree(List<Node> tree, NodeStar newNode, List<NodeStar> nearNodes)
         {
             foreach (var nearNode in nearNodes)
             {
@@ -82,9 +90,9 @@ namespace RRTAlgorithms
         /// <summary>
         /// 递归更新指定树中所有子节点的代价
         /// </summary>
-        protected void UpdateChildrenCostInTree(List<Node> tree, Node parentNode)
+        protected void UpdateChildrenCostInTree(List<Node> tree, NodeStar parentNode)
         {
-            foreach (var node in tree)
+            foreach (var node in tree.Cast<NodeStar>())
             {
                 if (node.Parent == parentNode)
                 {
@@ -97,7 +105,7 @@ namespace RRTAlgorithms
         /// <summary>
         /// 在树中扩展一个新节点（带优化）
         /// </summary>
-        protected Node ExtendTreeWithOptimization(List<Node> tree, double randX, double randY)
+        protected NodeStar ExtendTreeWithOptimization(List<Node> tree, double randX, double randY)
         {
             Node nearest = NearestNodeInTree(tree, randX, randY);
             var (newX, newY) = Steer(nearest, randX, randY);
@@ -107,15 +115,15 @@ namespace RRTAlgorithms
                 return null;
             }
 
-            Node newNode = new Node(newX, newY);
-            List<Node> nearNodes = FindNearNodesInTree(tree, newNode);
+            NodeStar newNode = new NodeStar(newX, newY);
+            List<NodeStar> nearNodes = FindNearNodesInTree(tree, newNode);
 
             // 选择最优父节点
-            Node bestParent = ChooseParentInTree(tree, newNode, nearNodes);
+            NodeStar bestParent = ChooseParentInTree(tree, newNode, nearNodes);
             if (bestParent == null)
             {
                 newNode.Parent = nearest;
-                newNode.Cost = nearest.Cost + Distance(nearest, newNode);
+                newNode.Cost = ((NodeStar)nearest).Cost + Distance(nearest, newNode);
             }
 
             tree.Add(newNode);
@@ -129,7 +137,7 @@ namespace RRTAlgorithms
         /// <summary>
         /// 尝试将树连接到目标点（带优化）
         /// </summary>
-        protected (Node, bool) ConnectTreeWithOptimization(List<Node> tree, double targetX, double targetY)
+        protected (NodeStar, bool) ConnectTreeWithOptimization(List<Node> tree, double targetX, double targetY)
         {
             while (true)
             {
@@ -142,9 +150,9 @@ namespace RRTAlgorithms
                 {
                     if (IsCollisionFree(nearest, targetX, targetY))
                     {
-                        Node newNode = new Node(targetX, targetY);
+                        NodeStar newNode = new NodeStar(targetX, targetY);
                         newNode.Parent = nearest;
-                        newNode.Cost = nearest.Cost + Distance(nearest, newNode);
+                        newNode.Cost = ((NodeStar)nearest).Cost + Distance(nearest, newNode);
                         tree.Add(newNode);
                         return (newNode, true);
                     }
@@ -157,9 +165,9 @@ namespace RRTAlgorithms
                     return (null, false);
                 }
 
-                Node newNode2 = new Node(newX, newY);
+                NodeStar newNode2 = new NodeStar(newX, newY);
                 newNode2.Parent = nearest;
-                newNode2.Cost = nearest.Cost + Distance(nearest, newNode2);
+                newNode2.Cost = ((NodeStar)nearest).Cost + Distance(nearest, newNode2);
                 tree.Add(newNode2);
 
                 double distToTarget = Math.Sqrt(Math.Pow(newX - targetX, 2) + Math.Pow(newY - targetY, 2));
@@ -182,7 +190,7 @@ namespace RRTAlgorithms
                 var (randX, randY) = RandomSample();
 
                 // 在起始树中扩展（带优化）
-                Node newNodeStart = ExtendTreeWithOptimization(startTree, randX, randY);
+                NodeStar newNodeStart = ExtendTreeWithOptimization(startTree, randX, randY);
 
                 if (newNodeStart != null)
                 {

@@ -14,18 +14,71 @@ namespace RRTAlgorithms
         {
             Console.OutputEncoding = System.Text.Encoding.UTF8;
 
-            // 定义起点、终点和边界
-            var start = (1.0, 1.0);
-            var goal = (9.0, 9.0);
-            var bounds = (0.0, 10.0, 0.0, 10.0);
+            // 定义起点、终点和边界（大规模地图）
+            var start = (5.0, 5.0);
+            var goal = (95.0, 95.0);
+            var bounds = (0.0, 100.0, 0.0, 100.0);
 
-            // 定义障碍物
+            // 定义障碍物（增加障碍物数量和复杂度，构建更复杂的环境）
             var obstacles = new List<Obstacle>
             {
-                new Obstacle(3, 2, 1, 3),
-                new Obstacle(5, 5, 2, 2),
-                new Obstacle(2, 6, 2, 1),
-                new Obstacle(7, 3, 1, 4)
+                // 大型障碍物
+                new Obstacle(15, 10, 6, 15),
+                new Obstacle(40, 40, 12, 12),
+                new Obstacle(20, 60, 10, 6),
+                new Obstacle(70, 25, 6, 25),
+                new Obstacle(50, 15, 8, 10),
+                new Obstacle(80, 50, 6, 15),
+                new Obstacle(30, 80, 12, 8),
+                new Obstacle(65, 70, 10, 10),
+                
+                // 中型障碍物
+                new Obstacle(10, 30, 6, 12),
+                new Obstacle(55, 85, 8, 6),
+                new Obstacle(90, 10, 4, 20),
+                new Obstacle(25, 45, 6, 8),
+                new Obstacle(35, 20, 4, 5),
+                new Obstacle(60, 35, 5, 6),
+                new Obstacle(45, 65, 4, 4),
+                new Obstacle(75, 55, 5, 5),
+                new Obstacle(20, 25, 3, 4),
+                new Obstacle(85, 75, 4, 6),
+                new Obstacle(12, 75, 5, 5),
+                new Obstacle(55, 58, 4, 4),
+                
+                // 新增小型障碍物，形成更密集的环境
+                new Obstacle(28, 12, 3, 4),
+                new Obstacle(48, 28, 3, 3),
+                new Obstacle(38, 55, 3, 4),
+                new Obstacle(68, 45, 4, 3),
+                new Obstacle(15, 48, 3, 3),
+                new Obstacle(82, 35, 3, 4),
+                new Obstacle(42, 78, 4, 3),
+                new Obstacle(72, 88, 3, 3),
+                new Obstacle(8, 55, 3, 4),
+                new Obstacle(92, 62, 3, 4),
+                new Obstacle(33, 68, 3, 3),
+                new Obstacle(58, 22, 4, 3),
+                new Obstacle(18, 38, 3, 3),
+                new Obstacle(78, 15, 3, 4),
+                new Obstacle(52, 48, 3, 3),
+                new Obstacle(88, 88, 3, 4),
+                new Obstacle(5, 85, 3, 3),
+                new Obstacle(95, 28, 3, 3),
+                new Obstacle(62, 68, 3, 4),
+                new Obstacle(25, 88, 4, 3),
+                
+                // 额外的小障碍物，进一步增加难度
+                new Obstacle(44, 18, 2, 3),
+                new Obstacle(66, 58, 3, 2),
+                new Obstacle(22, 52, 2, 2),
+                new Obstacle(74, 38, 2, 3),
+                new Obstacle(36, 82, 3, 2),
+                new Obstacle(84, 22, 2, 2),
+                new Obstacle(14, 62, 2, 3),
+                new Obstacle(58, 75, 3, 2),
+                new Obstacle(48, 8, 2, 2),
+                new Obstacle(88, 48, 2, 3)
             };
 
             Console.WriteLine("======================================================================");
@@ -37,27 +90,27 @@ namespace RRTAlgorithms
 
             // 1. RRT
             Console.WriteLine("\n[1/5] 运行RRT算法...");
-            var rrt = new RRT(start, goal, obstacles, bounds, stepSize: 0.5, maxIter: 2000);
+            var rrt = new RRT(start, goal, obstacles, bounds, stepSize: 2.0, maxIter: 20000);
             results["RRT"] = RunAlgorithm(rrt, () => rrt.Plan());
 
             // 2. RRT*
             Console.WriteLine("\n[2/5] 运行RRT*算法...");
-            var rrtStar = new RRTStar(start, goal, obstacles, bounds, stepSize: 0.5, maxIter: 2000, searchRadius: 1.5);
+            var rrtStar = new RRTStar(start, goal, obstacles, bounds, stepSize: 2.0, maxIter: 20000, searchRadius: 5.0);
             results["RRT*"] = RunAlgorithm(rrtStar, () => rrtStar.Plan());
 
             // 3. RRT-Connect
             Console.WriteLine("\n[3/5] 运行RRT-Connect算法...");
-            var rrtConnect = new RRTConnect(start, goal, obstacles, bounds, stepSize: 0.5, maxIter: 2000, randomSeed: 42);
+            var rrtConnect = new RRTConnect(start, goal, obstacles, bounds, stepSize: 2.0, maxIter: 20000, randomSeed: 42);
             results["RRT-Connect"] = RunAlgorithm(rrtConnect, () => rrtConnect.Plan());
 
             // 4. RRT*-Connect
             Console.WriteLine("\n[4/5] 运行RRT*-Connect算法...");
-            var rrtStarConnect = new RRTStarConnect(start, goal, obstacles, bounds, stepSize: 0.5, maxIter: 2000, searchRadius: 1.5);
+            var rrtStarConnect = new RRTStarConnect(start, goal, obstacles, bounds, stepSize: 2.0, maxIter: 20000, searchRadius: 5.0);
             results["RRT*-Connect"] = RunAlgorithm(rrtStarConnect, () => rrtStarConnect.Plan());
 
             // 5. RRT-Connect + Shortcut
             Console.WriteLine("\n[5/5] 运行RRT-Connect + Path Shortcutting算法...");
-            var rrtConnectShortcut = new RRTConnectShortcut(start, goal, obstacles, bounds, stepSize: 0.5, maxIter: 2000, randomSeed: 42);
+            var rrtConnectShortcut = new RRTConnectShortcut(start, goal, obstacles, bounds, stepSize: 2.0, maxIter: 20000, randomSeed: 42);
             results["RRT-Connect+Shortcut"] = RunAlgorithm(rrtConnectShortcut, () => rrtConnectShortcut.Plan());
 
             // 打印对比结果

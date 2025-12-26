@@ -24,11 +24,6 @@ namespace RRTAlgorithms
         public Node Parent { get; set; }
 
         /// <summary>
-        /// 从起点到当前节点的代价（用于RRT*）
-        /// </summary>
-        public double Cost { get; set; }
-
-        /// <summary>
         /// 构造函数
         /// </summary>
         /// <param name="x">X坐标</param>
@@ -38,7 +33,6 @@ namespace RRTAlgorithms
             X = x;
             Y = y;
             Parent = null;
-            Cost = 0.0;
         }
 
         /// <summary>
